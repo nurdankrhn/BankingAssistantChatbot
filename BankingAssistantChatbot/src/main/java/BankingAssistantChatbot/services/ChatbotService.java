@@ -6,27 +6,54 @@ import org.springframework.stereotype.Service;
 public class ChatbotService {
 
     private final AiClientService aiClientService;
+    private final BankingService bankingService;
 
-    public ChatbotService(AiClientService aiClientService) {
+    public ChatbotService(AiClientService aiClientService, BankingService bankingService) {
         this.aiClientService = aiClientService;
+        this.bankingService = bankingService;
     }
 
-    public String generateResponse(String userMessage) {
+    public String generateResponse(String userIban, String userMessage) {
+
         if (userMessage == null || userMessage.isBlank()) {
             return "Please type a message.";
         }
 
-        // Simple rule-based responses for common banking questions
-        String lowerMsg = userMessage.toLowerCase();
-        if (lowerMsg.contains("balance")) {
-            return "You can check your account balance via our mobile app or internet banking.";
-        } else if (lowerMsg.contains("transfer")) {
-            return "To make a transfer, please provide the recipient details in the app.";
-        } else if (lowerMsg.contains("hours") || lowerMsg.contains("working time")) {
-            return "Our branch hours are Mon-Fri, 9:00 AM to 5:00 PM.";
+        String msg = userMessage.toLowerCase();
+
+        // Balance inquiry
+        if (msg.contains("balance")) {
+            Double balance = bankingService.getBalance(userIban);
+            if (balance == null) return "I could not find an account for your IBAN.";
+            return "Your current balance is $" + balance;
         }
 
-        // Otherwise, delegate to AI
+        // Transfer
+        if (msg.contains("transfer")) {
+            String[] parts = msg.split(" ");
+
+            Double amount = null;
+            String targetIban = null;
+
+            for (String p : parts) {
+                if (p.matches("\\d+(\\.\\d+)?")) {
+                    amount = Double.parseDouble(p);
+                } else if (p.startsWith("tr")) {
+                    targetIban = p.toUpperCase();
+                }
+            }
+
+            if (amount != null && targetIban != null) {
+                boolean ok = bankingService.transfer(userIban, targetIban, amount);
+                return ok
+                        ? "Successfully transferred $" + amount + " to " + targetIban + "."
+                        : "Transfer failed. Please check balance or IBAN.";
+            }
+
+            return "Please use format: Transfer <amount> to <IBAN>";
+        }
+
+        // AI fallback
         return aiClientService.askModel(userMessage);
     }
 }

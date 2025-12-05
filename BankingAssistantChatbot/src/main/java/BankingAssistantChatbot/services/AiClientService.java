@@ -15,11 +15,10 @@ public class AiClientService {
 
     private static final Logger logger = LoggerFactory.getLogger(AiClientService.class);
     private final RestTemplate restTemplate = new RestTemplate();
-    private final String AI_URL = "http://localhost:11434/v1/chat/completions";
+    private static final String AI_URL = "http://localhost:11434/v1/chat/completions";
 
     public String askModel(String userMessage) {
         try {
-            // TinyLlama expects messages: [{"role":"user","content":"..."}]
             Map<String, Object> body = Map.of(
                     "model", "tinyllama-1.1b-chat-v1.0.Q4_K_M",
                     "messages", List.of(Map.of("role", "user", "content", userMessage))
@@ -27,20 +26,22 @@ public class AiClientService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    AI_URL, HttpMethod.POST, request,
+                    AI_URL,
+                    HttpMethod.POST,
+                    request,
                     new ParameterizedTypeReference<>() {}
             );
 
-            Map<String, Object> responseBody = response.getBody();
-            if (responseBody == null) {
-                logger.warn("Empty response from TinyLlama");
-                return "Sorry, I could not get a response from the AI.";
+            Map<String, Object> resp = response.getBody();
+            if (resp == null) {
+                return "AI service returned empty response.";
             }
 
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) resp.get("choices");
             if (choices != null && !choices.isEmpty()) {
                 Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
                 if (message != null && message.get("content") != null) {
@@ -48,12 +49,11 @@ public class AiClientService {
                 }
             }
 
-            logger.warn("Unexpected response structure from TinyLlama: {}", responseBody);
-            return "Sorry, I could not understand the AI response.";
+            return "AI service returned unexpected response.";
 
         } catch (Exception e) {
-            logger.error("Error communicating with TinyLlama", e);
-            return "Sorry, there was an error connecting to the AI service.";
+            logger.error("AI communication error", e);
+            return "Error: could not reach AI server.";
         }
     }
 }

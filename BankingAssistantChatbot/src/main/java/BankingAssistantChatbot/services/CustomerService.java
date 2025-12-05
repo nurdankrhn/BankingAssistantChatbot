@@ -1,11 +1,8 @@
 package BankingAssistantChatbot.services;
 
-
 import BankingAssistantChatbot.model.Customer;
 import BankingAssistantChatbot.repository.CustomerRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 public class CustomerService {
@@ -16,15 +13,22 @@ public class CustomerService {
         this.customerRepository = customerRepository;
     }
 
-    public Customer save(Customer customer) {
+    public Customer createCustomer(String firstName, String lastName, String email) {
+        if (customerRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("Customer with this email already exists.");
+        }
+
+        Customer customer = Customer.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .email(email)
+                .build();
+
         return customerRepository.save(customer);
     }
 
-    public Optional<Customer> findById(Long id) {
-        return customerRepository.findById(id);
-    }
-
-    public Optional<Customer> findByEmail(String email) {
-        return customerRepository.findByEmail(email);
+    public Customer getCustomerByEmail(String email) {
+        return customerRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
     }
 }

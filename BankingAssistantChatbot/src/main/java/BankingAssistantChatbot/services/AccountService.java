@@ -1,12 +1,12 @@
 package BankingAssistantChatbot.services;
 
 import BankingAssistantChatbot.model.Account;
-import BankingAssistantChatbot.model.Customer;
 import BankingAssistantChatbot.repository.AccountRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class AccountService {
@@ -17,16 +17,38 @@ public class AccountService {
         this.accountRepository = accountRepository;
     }
 
-    public List<Account> getCustomerAccounts(Customer customer) {
-        return accountRepository.findByCustomer(customer);
+    public Account createAccount(Account account) {
+        if (accountRepository.findByIban(account.getIban()) != null) {
+            throw new IllegalArgumentException("IBAN already exists");
+        }
+        return accountRepository.save(account);
     }
 
-    public Optional<Account> findByIban(String iban) {
+    public Account findByIban(String iban) {
         return accountRepository.findByIban(iban);
     }
 
-    public Account save(Account account) {
-        return accountRepository.save(account);
+    public List<Account> findByCustomerId(Long customerId) {
+        return accountRepository.findByCustomerId(customerId);
+    }
+
+    @Transactional
+    public boolean transfer(Account from, Account to, BigDecimal amount) {
+
+        if (!"ACTIVE".equals(from.getStatus()) || !"ACTIVE".equals(to.getStatus())) {
+            return false;
+        }
+
+        if (from.getBalance().compareTo(amount) < 0) {
+            return false;
+        }
+
+        from.setBalance(from.getBalance().subtract(amount));
+        to.setBalance(to.getBalance().add(amount));
+
+        accountRepository.save(from);
+        accountRepository.save(to);
+
+        return true;
     }
 }
-

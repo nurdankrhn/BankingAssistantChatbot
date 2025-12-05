@@ -22,7 +22,9 @@ public class ChatController {
             return new ChatMessageDTO("BANK-BOT", "Please send a valid message.", "BOT");
         }
 
-        String botResponse = chatbotService.generateResponse(message.getContent());
+        String userIban = message.getSender(); // sender holds IBAN
+        String botResponse = chatbotService.generateResponse(userIban, message.getContent());
+
         return new ChatMessageDTO("BANK-BOT", botResponse, "BOT");
     }
 }
