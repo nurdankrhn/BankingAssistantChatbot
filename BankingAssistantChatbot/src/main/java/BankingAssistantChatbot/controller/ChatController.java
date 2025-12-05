@@ -15,11 +15,14 @@ public class ChatController {
         this.chatbotService = chatbotService;
     }
 
-    @MessageMapping("/chat.send") // client sends message to /app/chat.send
-    @SendTo("/topic/public") // bot response broadcast to /topic/public
-    public ChatMessageDTO sendMessage(
-            ChatMessageDTO message) {
-        String botResponse = chatbotService.getResponse(message.getContent());
+    @MessageMapping("/chat.send")
+    @SendTo("/topic/public")
+    public ChatMessageDTO sendMessage(ChatMessageDTO message) {
+        if (message == null || message.getContent() == null || message.getContent().isBlank()) {
+            return new ChatMessageDTO("BANK-BOT", "Please send a valid message.", "BOT");
+        }
+
+        String botResponse = chatbotService.generateResponse(message.getContent());
         return new ChatMessageDTO("BANK-BOT", botResponse, "BOT");
     }
 }
