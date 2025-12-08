@@ -25,7 +25,8 @@ public class AccountService {
     }
 
     public Account findByIban(String iban) {
-        return accountRepository.findByIban(iban);
+        return accountRepository.findByIban(iban)
+                .orElseThrow(() -> new RuntimeException("Account not found with IBAN: " + iban));
     }
 
     public List<Account> findByCustomerId(Long customerId) {
