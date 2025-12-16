@@ -36,6 +36,7 @@ public class AiClientService {
     public String askModel(String message) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("model", "/models/qwen2.5-3b-instruct-q4_k_m.gguf");
+        payload.put("max_tokens", 512);
         payload.put("stream", false);
         payload.put("messages", List.of(
                 Map.of("role", "system", "content", SYSTEM_PROMPT),

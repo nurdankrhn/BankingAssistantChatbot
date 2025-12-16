@@ -24,6 +24,9 @@ public class Customer {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(nullable = false)
+    private String password;  // Add password field for authentication
+
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)

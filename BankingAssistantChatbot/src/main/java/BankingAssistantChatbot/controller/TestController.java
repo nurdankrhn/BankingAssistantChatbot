@@ -1,19 +1,24 @@
 package BankingAssistantChatbot.controller;
 
+import BankingAssistantChatbot.dto.ChatMessageDTO;
 import BankingAssistantChatbot.services.AiClientService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import BankingAssistantChatbot.services.ChatbotService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
 public class TestController {
-    private final AiClientService ai;
+    private final ChatbotService chatbotService;
 
-    public TestController(AiClientService ai) { this.ai = ai; }
+    public TestController(ChatbotService chatbotService) {
+        this.chatbotService = chatbotService;
+    }
 
-    @GetMapping("/ping-llm")
-    public String ping() {
-        return ai.askModel("IBAN nedir? 2 cümleyle açıkla.");
+    @PostMapping("/chat")
+    public ResponseEntity<String> getChatbotResponse(@RequestBody ChatMessageDTO message) {
+        // Assume message.getSender() contains the IBAN, and message.getContent() contains the user message
+        String response = chatbotService.generateResponse(message.getSender(), message.getContent());
+        return ResponseEntity.ok(response);
     }
 }
